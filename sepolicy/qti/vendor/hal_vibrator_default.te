@@ -1,1 +1,20 @@
 allow hal_vibrator_default aac_richtap_device:chr_file rw_file_perms;
+
+# The stock vibrator HAL needs more than the LineageOS richtap one did.
+#
+# qcom-hv-haptics exposes its runtime knobs as *class* attributes under
+# /sys/class/qcom-haptics (class_create_file, not device attributes - see
+# drivers/input/misc/qcom-hv-haptics.c), so they are not under /sys/devices/...
+# and no genfscon rule of ours covers them: they fall back to the generic sysfs
+# label. The stock ROM grants exactly this through its versioned sysfs_202504
+# alias, i.e. plain sysfs as well. The HAL reads vibrator_type / livetap_support
+# from there on startup and logs
+#   mEffectMngr loadEffect vibrator type = 816
+allow hal_vibrator_default sysfs:file rw_file_perms;
+allow hal_vibrator_default sysfs:dir r_dir_perms;
+
+# Before that it looks the actuator up by scanning /dev/input for the
+# "qcom-hv-haptics" node (event5 on lafa):
+#   qcom-hv-haptics is detected at /dev/input/event5
+allow hal_vibrator_default input_device:chr_file rw_file_perms;
+allow hal_vibrator_default input_device:dir r_dir_perms;
